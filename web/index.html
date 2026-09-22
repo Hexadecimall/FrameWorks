@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FrameWorks</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="titlebar">
+    <span class="mark">FW</span>
+    <strong>Frame<span>Works</span></strong>
+    <span class="engine-state" id="engineState">Loading engine…</span>
+  </header>
+  <main>
+    <aside>
+      <small>START</small>
+      <button class="active">Home</button>
+      <button id="newSide">New document</button>
+      <button disabled>Open document…</button>
+      <footer>FrameWorks WebAssembly</footer>
+    </aside>
+    <section class="content">
+      <h1>Create something precise.</h1>
+      <p>Start clean or continue from a recent design.</p>
+      <div class="actions">
+        <article>
+          <b class="plus">+</b>
+          <h2>New document</h2>
+          <p>Blank 1200 × 1500 canvas</p>
+          <button class="primary" id="newDocument">Create</button>
+        </article>
+        <article class="disabled">
+          <b class="open-icon">↗</b>
+          <h2>Open document</h2>
+          <p>Available with the document format</p>
+          <button disabled>Coming next</button>
+        </article>
+      </div>
+      <h3>Recent</h3>
+      <article class="recent" id="recentDocument">
+        <div class="poster"><i></i><b>FORM</b></div>
+        <div><h2>Orbital Poster</h2><p>1200 × 1500</p><p>Starter document</p><em>Open →</em></div>
+      </article>
+      <output id="result">Waiting for the WebAssembly engine.</output>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

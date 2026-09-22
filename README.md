@@ -29,6 +29,20 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+## Browser build
+
+The browser foundation uses Zig to compile its C++ engine surface to
+WebAssembly without Emscripten. This probe is the first extraction point for
+moving the native document model into a shared platform-neutral core:
+
+```sh
+./web/build.sh build-web
+python3 -m http.server 8000 --directory build-web
+```
+
+Open `http://127.0.0.1:8000` in a browser. The page reports when the
+WebAssembly engine has loaded and exposes working blank/recent document state.
+
 ## Architecture
 
 - `src/` contains the C++ document model and scene-graph canvas.
