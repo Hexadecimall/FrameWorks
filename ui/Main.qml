@@ -1,0 +1,274 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import FrameWorks
+import FrameWorks.Native
+
+ApplicationWindow {
+    id: window
+    width: 1440
+    height: 920
+    minimumWidth: 920
+    minimumHeight: 640
+    visible: true
+    title: "FrameWorks"
+    color: Theme.background
+
+    DocumentController { id: document }
+    property string activeTool: "Move"
+    property var tools: [
+        ["↖", "Move"], ["◇", "Node"], ["⌁", "Pen"], ["✎", "Brush"],
+        ["□", "Rectangle"], ["○", "Ellipse"], ["T", "Text"], ["✋", "Hand"], ["⌕", "Zoom"]
+    ]
+
+    header: Rectangle {
+        height: 48
+        color: Theme.chrome
+        border.color: Theme.border
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 12
+            anchors.rightMargin: 12
+            spacing: 10
+            Rectangle {
+                Layout.preferredWidth: 28; Layout.preferredHeight: 28
+                radius: 8; color: Theme.accent
+                Text { anchors.centerIn: parent; text: "FW"; color: "white"; font.pixelSize: 10; font.bold: true }
+            }
+            Text {
+                text: "Frame"; color: Theme.text; font.pixelSize: 16; font.bold: true
+                Text { x: parent.width; text: "Works"; color: Theme.accent; font: parent.font }
+            }
+            Item { Layout.preferredWidth: 24 }
+            Repeater {
+                model: ["File", "Edit", "Layer", "Select", "View"]
+                StudioButton { text: modelData }
+            }
+            Item { Layout.fillWidth: true }
+            Rectangle { width: 6; height: 6; radius: 3; color: "#68d391" }
+            Text { text: "Orbital Poster"; color: Theme.text; font.pixelSize: 13 }
+            Text { text: "1200 × 1500"; color: Theme.muted; font.pixelSize: 12 }
+            Item { Layout.fillWidth: true }
+            StudioButton { text: "↶"; enabled: document.canUndo; onClicked: document.undo() }
+            StudioButton { text: "↷"; enabled: document.canRedo; onClicked: document.redo() }
+            StudioButton { text: "Export"; active: true }
+        }
+    }
+
+    ColumnLayout {
+        anchors.fill: parent
+        spacing: 0
+
+        Rectangle {
+            Layout.fillWidth: true; Layout.preferredHeight: 44
+            color: Theme.chrome; border.color: Theme.border
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 12; spacing: 8
+                Text { text: "↖"; color: Theme.accent; font.pixelSize: 19 }
+                Text { text: activeTool; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                Item { Layout.preferredWidth: 8 }
+                Repeater {
+                    model: [["X", document.selectionX], ["Y", document.selectionY],
+                            ["W", document.selectionWidth], ["H", document.selectionHeight]]
+                    RowLayout {
+                        spacing: 5
+                        Text { text: modelData[0]; color: Theme.muted; font.pixelSize: 12 }
+                        TextField {
+                            implicitWidth: 68; implicitHeight: 30
+                            text: Math.round(modelData[1]).toString()
+                            color: Theme.text; font.pixelSize: 12
+                            background: Rectangle { color: "#151416"; radius: 5; border.color: Theme.border }
+                            onEditingFinished: {
+                                const value = Number(text)
+                                if (modelData[0] === "X") document.selectionX = value
+                                else if (modelData[0] === "Y") document.selectionY = value
+                                else if (modelData[0] === "W") document.selectionWidth = value
+                                else document.selectionHeight = value
+                            }
+                        }
+                    }
+                }
+                Item { Layout.fillWidth: true }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true; Layout.fillHeight: true; spacing: 0
+
+            Rectangle {
+                Layout.preferredWidth: 58; Layout.fillHeight: true
+                color: "#1c1b1e"; border.color: Theme.border
+                ColumnLayout {
+                    anchors.fill: parent; anchors.margins: 7; spacing: 4
+                    Repeater {
+                        model: window.tools
+                        StudioButton {
+                            Layout.preferredWidth: 42; Layout.preferredHeight: 42
+                            text: modelData[0]; active: activeTool === modelData[1]
+                            ToolTip.visible: hovered; ToolTip.text: modelData[1]
+                            onClicked: activeTool = modelData[1]
+                        }
+                    }
+                    Item { Layout.fillHeight: true }
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        width: 28; height: 28; radius: 7
+                        color: document.selectionFill; border.color: "white"; border.width: 2
+                    }
+                }
+            }
+
+            Rectangle {
+                id: stage
+                Layout.fillWidth: true; Layout.fillHeight: true
+                color: "#27252a"
+                Canvas {
+                    anchors.fill: parent
+                    onPaint: {
+                        const ctx = getContext("2d")
+                        ctx.clearRect(0, 0, width, height)
+                        ctx.fillStyle = "#3a373d"
+                        for (let y = 12; y < height; y += 16)
+                            for (let x = 12; x < width; x += 16) ctx.fillRect(x, y, 1, 1)
+                    }
+                }
+                Rectangle {
+                    id: artboard
+                    width: Math.min(parent.width * 0.62, parent.height * 0.66 * 0.8)
+                    height: width * 1.25
+                    anchors.centerIn: parent
+                    color: "white"
+                    layer.enabled: true
+                    layer.samples: 4
+
+                    ArtworkCanvas { anchors.fill: parent; document: document }
+                    Text {
+                        x: parent.width * 0.075; y: parent.height * 0.07
+                        text: "OBJECTS IN MOTION · 2026"; color: "#181619"
+                        font.pixelSize: Math.max(9, parent.width * 0.022); font.bold: true; font.letterSpacing: 4
+                    }
+                    Text {
+                        x: parent.width * 0.07; y: parent.height * 0.69
+                        text: "FORM"; color: "#181619"
+                        font.pixelSize: parent.width * 0.14; font.weight: Font.Black
+                    }
+                    Text {
+                        x: parent.width * 0.07; y: parent.height * 0.79
+                        text: "FOLLOWS"; color: "transparent"
+                        style: Text.Outline; styleColor: "#181619"
+                        font.pixelSize: parent.width * 0.13; font.weight: Font.Black
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: document.selectLayer(4)
+                    }
+                }
+                Rectangle {
+                    anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 14
+                    width: 112; height: 36; radius: 8; color: "#1b1a1d"; border.color: Theme.border
+                    RowLayout {
+                        anchors.fill: parent
+                        StudioButton { text: "−" }
+                        Text { text: "42%"; color: Theme.text; font.pixelSize: 12 }
+                        StudioButton { text: "+" }
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.preferredWidth: 300; Layout.fillHeight: true
+                color: "#1d1c1f"; border.color: Theme.border
+                ColumnLayout {
+                    anchors.fill: parent; spacing: 0
+                    RowLayout {
+                        Layout.fillWidth: true; Layout.preferredHeight: 44
+                        Repeater { model: ["Design", "Assets", "History"]; StudioButton { Layout.fillWidth: true; text: modelData; active: index === 0 } }
+                    }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    ColumnLayout {
+                        Layout.fillWidth: true; Layout.margins: 12; spacing: 10
+                        Text { text: "Appearance"; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                        RowLayout {
+                            Text { text: "Fill"; color: Theme.muted; Layout.preferredWidth: 62 }
+                            Rectangle { width: 24; height: 24; radius: 5; color: document.selectionFill; border.color: Theme.border }
+                            TextField {
+                                Layout.fillWidth: true; text: document.selectionFill.toString()
+                                color: Theme.text; font.pixelSize: 12
+                                background: Rectangle { color: "#171619"; radius: 5; border.color: Theme.border }
+                                onEditingFinished: document.selectionFill = text
+                            }
+                        }
+                        RowLayout {
+                            Text { text: "Opacity"; color: Theme.muted; Layout.preferredWidth: 62 }
+                            Slider { Layout.fillWidth: true; from: 0; to: 1; value: document.selectionOpacity; onMoved: document.selectionOpacity = value }
+                            Text { text: Math.round(document.selectionOpacity * 100) + "%"; color: Theme.text; font.pixelSize: 12 }
+                        }
+                    }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    ColumnLayout {
+                        Layout.fillWidth: true; Layout.margins: 12; spacing: 9
+                        Text { text: "Transform"; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                        RowLayout {
+                            StudioButton { Layout.fillWidth: true; text: "Duplicate"; onClicked: document.duplicateSelected() }
+                            StudioButton { Layout.fillWidth: true; text: "Delete"; onClicked: document.removeSelected() }
+                        }
+                    }
+                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
+                    Text { Layout.margins: 12; text: "Layers"; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                    ListView {
+                        id: layerList
+                        Layout.fillWidth: true; Layout.fillHeight: true
+                        Layout.leftMargin: 8; Layout.rightMargin: 8
+                        model: document
+                        clip: true
+                        verticalLayoutDirection: ListView.BottomToTop
+                        delegate: Rectangle {
+                            required property int index
+                            required property string layerName
+                            required property string layerType
+                            required property bool layerVisible
+                            required property bool layerLocked
+                            required property bool layerSelected
+                            width: layerList.width; height: 54; radius: 7
+                            color: layerSelected ? "#343138" : layerMouse.containsMouse ? "#29272c" : "transparent"
+                            Rectangle { width: 2; height: parent.height - 12; anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; color: layerSelected ? Theme.accent : "transparent" }
+                            RowLayout {
+                                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 9
+                                StudioButton { text: layerVisible ? "●" : "○"; onClicked: document.toggleVisibility(index) }
+                                Rectangle {
+                                    width: 32; height: 30; radius: 5; color: "#252328"; border.color: Theme.border
+                                    Text { anchors.centerIn: parent; text: layerType === "Text" ? "T" : layerType.startsWith("Ellipse") ? "○" : layerType === "Curve" ? "⌁" : "□"; color: Theme.text }
+                                }
+                                ColumnLayout {
+                                    Layout.fillWidth: true; spacing: 1
+                                    Text { text: layerName; color: Theme.text; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                                    Text { text: layerType; color: Theme.muted; font.pixelSize: 10 }
+                                }
+                                Text { text: layerLocked ? "⌑" : "›"; color: Theme.muted }
+                            }
+                            MouseArea { id: layerMouse; anchors.fill: parent; hoverEnabled: true; z: -1; onClicked: document.selectLayer(index) }
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true; Layout.preferredHeight: 30
+            color: Theme.chrome; border.color: Theme.border
+            RowLayout {
+                anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12
+                Text { text: "⌘ Drag to duplicate"; color: Theme.muted; font.pixelSize: 11 }
+                Item { Layout.fillWidth: true }
+                Text { text: "RGB/8 · sRGB IEC61966-2.1"; color: Theme.muted; font.pixelSize: 11 }
+                Item { Layout.fillWidth: true }
+                Text { text: document.selectedIndex >= 0 ? "Layer selected" : "Nothing selected"; color: Theme.muted; font.pixelSize: 11 }
+            }
+        }
+    }
+
+    Shortcut { sequences: [StandardKey.Undo]; onActivated: document.undo() }
+    Shortcut { sequences: [StandardKey.Redo]; onActivated: document.redo() }
+    Shortcut { sequence: "Ctrl+D"; onActivated: document.duplicateSelected() }
+    Shortcut { sequence: "Delete"; onActivated: document.removeSelected() }
+}

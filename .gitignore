@@ -1,0 +1,8 @@
+/build/
+/build-*/
+/.cache/
+/.qt/
+/.DS_Store
+*.user
+*.autosave
+*.fwx
