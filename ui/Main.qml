@@ -268,9 +268,21 @@ ApplicationWindow {
                 color: "#1d1c1f"; border.color: Theme.border
                 ColumnLayout {
                     anchors.fill: parent; spacing: 0
-                    RowLayout {
+                    Item {
                         Layout.fillWidth: true; Layout.preferredHeight: 44
-                        Repeater { model: ["Design", "Assets", "History"]; StudioButton { Layout.fillWidth: true; text: modelData; active: index === 0 } }
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 4
+                            Repeater {
+                                model: ["Design", "Assets", "History"]
+                                StudioButton {
+                                    width: 84
+                                    height: 36
+                                    text: modelData
+                                    active: index === 0
+                                }
+                            }
+                        }
                     }
                     Rectangle { Layout.fillWidth: true; height: 1; color: Theme.border }
                     ColumnLayout {
