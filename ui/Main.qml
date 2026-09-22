@@ -85,20 +85,27 @@ ApplicationWindow {
                 targetWindow: window
                 macStyle: true
             }
-            Rectangle {
-                Layout.preferredWidth: 28; Layout.preferredHeight: 28
-                radius: 8; color: Theme.accent
-                Text { anchors.centerIn: parent; text: "FW"; color: "white"; font.pixelSize: 10; font.bold: true }
-            }
-            Row {
+            RowLayout {
                 spacing: 0
-                Text { text: "Frame"; color: Theme.text; font.pixelSize: 16; font.bold: true }
-                Text { text: "Works"; color: Theme.accent; font.pixelSize: 16; font.bold: true }
-            }
-            Item { Layout.preferredWidth: 24 }
-            Repeater {
-                model: ["File", "Edit", "Layer", "Select", "View"]
-                StudioButton { text: modelData }
+                Rectangle {
+                    Layout.preferredWidth: 28; Layout.preferredHeight: 28
+                    radius: 8; color: Theme.accent
+                    Text { anchors.centerIn: parent; text: "FW"; color: "white"; font.pixelSize: 10; font.bold: true }
+                }
+                Item { Layout.preferredWidth: 14 }
+                Row {
+                    spacing: 0
+                    Text { text: "Frame"; color: Theme.text; font.pixelSize: 16; font.bold: true }
+                    Text { text: "Works"; color: Theme.accent; font.pixelSize: 16; font.bold: true }
+                }
+                Item { Layout.preferredWidth: 10 }
+                Row {
+                    spacing: 4
+                    Repeater {
+                        model: ["File", "Edit", "Layer", "Select", "View"]
+                        StudioButton { text: modelData }
+                    }
+                }
             }
             Item { Layout.fillWidth: true }
             Rectangle { width: 6; height: 6; radius: 3; color: "#68d391" }
