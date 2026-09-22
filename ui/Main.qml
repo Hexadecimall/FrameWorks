@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import FrameWorks
 import FrameWorks.Native
+import "components"
 
 ApplicationWindow {
     id: window
@@ -13,6 +14,9 @@ ApplicationWindow {
     visible: true
     title: "FrameWorks"
     color: Theme.background
+    property bool desktopWindow: Qt.platform.os !== "wasm"
+    property bool macWindow: Qt.platform.os === "osx"
+    flags: desktopWindow ? Qt.Window | Qt.FramelessWindowHint : Qt.Window
 
     DocumentController { id: document }
     property string activeTool: "Move"
@@ -22,14 +26,33 @@ ApplicationWindow {
     ]
 
     header: Rectangle {
+        id: titleBar
         height: 48
         color: Theme.chrome
         border.color: Theme.border
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onPressed: if (window.desktopWindow) window.startSystemMove()
+            onDoubleClicked: {
+                if (!window.desktopWindow) return
+                if (window.visibility === Window.Maximized) window.showNormal()
+                else window.showMaximized()
+            }
+        }
+
         RowLayout {
             anchors.fill: parent
             anchors.leftMargin: 12
             anchors.rightMargin: 12
             spacing: 10
+            WindowControls {
+                visible: window.desktopWindow && window.macWindow
+                Layout.preferredWidth: visible ? implicitWidth : 0
+                targetWindow: window
+                macStyle: true
+            }
             Rectangle {
                 Layout.preferredWidth: 28; Layout.preferredHeight: 28
                 radius: 8; color: Theme.accent
@@ -52,8 +75,37 @@ ApplicationWindow {
             StudioButton { text: "↶"; enabled: document.canUndo; onClicked: document.undo() }
             StudioButton { text: "↷"; enabled: document.canRedo; onClicked: document.redo() }
             StudioButton { text: "Export"; active: true }
+            WindowControls {
+                visible: window.desktopWindow && !window.macWindow
+                Layout.preferredWidth: visible ? implicitWidth : 0
+                Layout.fillHeight: true
+                targetWindow: window
+                macStyle: false
+            }
         }
+        ResizeHandle { edges: Qt.TopEdge; anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; height: 5 }
+        ResizeHandle { edges: Qt.LeftEdge | Qt.TopEdge; anchors.left: parent.left; anchors.top: parent.top; width: 9; height: 9 }
+        ResizeHandle { edges: Qt.RightEdge | Qt.TopEdge; anchors.right: parent.right; anchors.top: parent.top; width: 9; height: 9 }
     }
+
+    component ResizeHandle: MouseArea {
+        required property int edges
+        visible: window.desktopWindow && window.visibility !== Window.Maximized
+        z: 1000
+        cursorShape: edges === (Qt.LeftEdge | Qt.TopEdge) || edges === (Qt.RightEdge | Qt.BottomEdge)
+                     ? Qt.SizeFDiagCursor
+                     : edges === (Qt.RightEdge | Qt.TopEdge) || edges === (Qt.LeftEdge | Qt.BottomEdge)
+                       ? Qt.SizeBDiagCursor
+                       : edges === Qt.LeftEdge || edges === Qt.RightEdge
+                         ? Qt.SizeHorCursor : Qt.SizeVerCursor
+        onPressed: window.startSystemResize(edges)
+    }
+
+    ResizeHandle { edges: Qt.LeftEdge; anchors.left: parent.left; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 5 }
+    ResizeHandle { edges: Qt.RightEdge; anchors.right: parent.right; anchors.top: parent.top; anchors.bottom: parent.bottom; width: 5 }
+    ResizeHandle { edges: Qt.BottomEdge; anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right; height: 5 }
+    ResizeHandle { edges: Qt.LeftEdge | Qt.BottomEdge; anchors.left: parent.left; anchors.bottom: parent.bottom; width: 9; height: 9 }
+    ResizeHandle { edges: Qt.RightEdge | Qt.BottomEdge; anchors.right: parent.right; anchors.bottom: parent.bottom; width: 9; height: 9 }
 
     ColumnLayout {
         anchors.fill: parent

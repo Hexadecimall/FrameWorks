@@ -26,6 +26,7 @@ qt_add_qml_module(frameworks
         ui/Main.qml
         ui/Theme.qml
         ui/components/StudioButton.qml
+        ui/components/WindowControls.qml
 )
 
 target_link_libraries(frameworks PRIVATE Qt6::Quick Qt6::Qml Qt6::QuickControls2)
