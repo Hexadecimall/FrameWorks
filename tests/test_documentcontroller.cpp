@@ -12,7 +12,7 @@ private slots:
     {
         DocumentController document;
         QCOMPARE(document.rowCount(), 8);
-        QCOMPARE(document.selectedIndex(), 4);
+        QCOMPARE(document.selectedIndex(), 3);
         QCOMPARE(document.selectionWidth(), 600.0);
     }
 
@@ -31,7 +31,7 @@ private slots:
     void protectsLockedLayer()
     {
         DocumentController document;
-        document.selectLayer(0);
+        document.selectLayer(7);
         const int count = document.rowCount();
         document.removeSelected();
         QCOMPARE(document.rowCount(), count);

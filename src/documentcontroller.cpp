@@ -6,16 +6,16 @@ DocumentController::DocumentController(QObject *parent)
     : QAbstractListModel(parent)
 {
     m_layers = {
-        {"Background", "Rectangle", {0, 0, 1200, 1500}, QColor("#ff754d"), 1.0, true, true},
-        {"Kicker", "Text", {90, 95, 500, 60}, QColor("#181619")},
-        {"FORM", "Text", {85, 1040, 510, 190}, QColor("#181619")},
-        {"FOLLOWS", "Text", {85, 1210, 760, 190}, QColor("#181619")},
-        {"Orb", "Ellipse", {300, 340, 600, 600}, QColor("#7868ff")},
-        {"Orbit", "EllipseOutline", {230, 270, 740, 740}, QColor("#ffffff"), 0.72},
+        {"Satellite", "Ellipse", {860, 802, 44, 44}, QColor("#f7ff64")},
         {"Arc", "Curve", {260, 700, 690, 280}, QColor("#1a1719")},
-        {"Satellite", "Ellipse", {860, 802, 44, 44}, QColor("#f7ff64")}
+        {"Orbit", "EllipseOutline", {230, 270, 740, 740}, QColor("#ffffff"), 0.75},
+        {"Orb", "Ellipse", {300, 340, 600, 600}, QColor("#7868ff")},
+        {"FOLLOWS", "Text", {85, 1210, 760, 190}, QColor("#181619")},
+        {"FORM", "Text", {85, 1040, 510, 190}, QColor("#181619")},
+        {"Kicker", "Text", {90, 95, 500, 60}, QColor("#181619")},
+        {"Background", "Rectangle", {0, 0, 1200, 1500}, QColor("#ff754d"), 1.0, true, true}
     };
-    m_selectedIndex = 4;
+    m_selectedIndex = 3;
     pushHistory();
 }
 
@@ -133,10 +133,14 @@ void DocumentController::duplicateSelected()
     copy.name += QStringLiteral(" copy");
     copy.locked = false;
     copy.bounds.translate(28, 28);
-    beginInsertRows({}, m_layers.size(), m_layers.size());
-    m_layers.push_back(copy);
+    const int insertionIndex = m_selectedIndex;
+    beginInsertRows({}, insertionIndex, insertionIndex);
+    m_layers.insert(insertionIndex, copy);
     endInsertRows();
-    selectLayer(m_layers.size() - 1);
+    m_selectedIndex = insertionIndex;
+    emit selectionChanged();
+    emit selectionGeometryChanged();
+    emit selectionAppearanceChanged();
     pushHistory();
     emit documentChanged();
 }
@@ -159,22 +163,22 @@ void DocumentController::removeSelected()
 
 void DocumentController::bringSelectedToFront()
 {
-    if (m_selectedIndex < 0 || m_selectedIndex == m_layers.size() - 1) return;
-    beginMoveRows({}, m_selectedIndex, m_selectedIndex, {}, m_layers.size());
-    m_layers.move(m_selectedIndex, m_layers.size() - 1);
+    if (m_selectedIndex <= 0) return;
+    beginMoveRows({}, m_selectedIndex, m_selectedIndex, {}, 0);
+    m_layers.move(m_selectedIndex, 0);
     endMoveRows();
-    m_selectedIndex = m_layers.size() - 1;
+    m_selectedIndex = 0;
     pushHistory();
     emit documentChanged();
 }
 
 void DocumentController::sendSelectedToBack()
 {
-    if (m_selectedIndex <= 0) return;
-    beginMoveRows({}, m_selectedIndex, m_selectedIndex, {}, 0);
-    m_layers.move(m_selectedIndex, 0);
+    if (m_selectedIndex < 0 || m_selectedIndex == m_layers.size() - 1) return;
+    beginMoveRows({}, m_selectedIndex, m_selectedIndex, {}, m_layers.size());
+    m_layers.move(m_selectedIndex, m_layers.size() - 1);
     endMoveRows();
-    m_selectedIndex = 0;
+    m_selectedIndex = m_layers.size() - 1;
     pushHistory();
     emit documentChanged();
 }

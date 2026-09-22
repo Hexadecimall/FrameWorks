@@ -55,7 +55,7 @@ ApplicationWindow {
     property string activeTool: "Move"
     property var tools: [
         ["↖", "Move"], ["◇", "Node"], ["⌁", "Pen"], ["✎", "Brush"],
-        ["□", "Rectangle"], ["○", "Ellipse"], ["T", "Text"], ["✋", "Hand"], ["⌕", "Zoom"]
+        ["□", "Rectangle"], ["○", "Ellipse"], ["T", "Text"], ["H", "Hand"], ["Z", "Zoom"]
     ]
 
     header: Rectangle {
@@ -207,6 +207,7 @@ ApplicationWindow {
                 id: stage
                 Layout.fillWidth: true; Layout.fillHeight: true
                 color: "#27252a"
+                clip: true
                 Canvas {
                     anchors.fill: parent
                     onPaint: {
@@ -219,7 +220,9 @@ ApplicationWindow {
                 }
                 Rectangle {
                     id: artboard
-                    width: Math.min(parent.width * 0.62, parent.height * 0.66 * 0.8)
+                    property real zoomFactor: 1.0
+                    readonly property real fittedWidth: Math.min(stage.width * 0.62, stage.height * 0.66 * 0.8)
+                    width: fittedWidth * zoomFactor
                     height: width * 1.25
                     anchors.centerIn: parent
                     color: "white"
@@ -245,7 +248,7 @@ ApplicationWindow {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        onPressed: document.selectLayer(4)
+                        onPressed: document.selectLayer(3)
                     }
                 }
                 Rectangle {
@@ -253,9 +256,9 @@ ApplicationWindow {
                     width: 112; height: 36; radius: 8; color: "#1b1a1d"; border.color: Theme.border
                     RowLayout {
                         anchors.fill: parent
-                        StudioButton { text: "−" }
-                        Text { text: "42%"; color: Theme.text; font.pixelSize: 12 }
-                        StudioButton { text: "+" }
+                        StudioButton { text: "−"; onClicked: artboard.zoomFactor = Math.max(0.5, artboard.zoomFactor - 0.1) }
+                        Text { text: Math.round(artboard.width / 12) + "%"; color: Theme.text; font.pixelSize: 12 }
+                        StudioButton { text: "+"; onClicked: artboard.zoomFactor = Math.min(2.0, artboard.zoomFactor + 0.1) }
                     }
                 }
             }
@@ -306,7 +309,6 @@ ApplicationWindow {
                         Layout.leftMargin: 8; Layout.rightMargin: 8
                         model: document
                         clip: true
-                        verticalLayoutDirection: ListView.BottomToTop
                         delegate: Rectangle {
                             required property int index
                             required property string layerName
@@ -344,7 +346,7 @@ ApplicationWindow {
             color: Theme.chrome; border.color: Theme.border
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12
-                Text { text: "⌘ Drag to duplicate"; color: Theme.muted; font.pixelSize: 11 }
+                Text { text: activeTool + " tool"; color: Theme.muted; font.pixelSize: 11 }
                 Item { Layout.fillWidth: true }
                 Text { text: "RGB/8 · sRGB IEC61966-2.1"; color: Theme.muted; font.pixelSize: 11 }
                 Item { Layout.fillWidth: true }
