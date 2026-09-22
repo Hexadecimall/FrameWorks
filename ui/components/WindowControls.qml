@@ -64,8 +64,7 @@ Item {
         TrafficLight {
             controlColor: "#28c840"
             symbol: "+"
-            onActivated: root.targetWindow.visibility === Window.Maximized
-                         ? root.targetWindow.showNormal() : root.targetWindow.showMaximized()
+            onActivated: root.targetWindow.toggleMaximized()
         }
     }
 
@@ -74,9 +73,8 @@ Item {
         anchors.fill: parent
         CaptionButton { symbol: "−"; onActivated: root.targetWindow.showMinimized() }
         CaptionButton {
-            symbol: root.targetWindow.visibility === Window.Maximized ? "❐" : "□"
-            onActivated: root.targetWindow.visibility === Window.Maximized
-                         ? root.targetWindow.showNormal() : root.targetWindow.showMaximized()
+            symbol: root.targetWindow.isMaximized ? "❐" : "□"
+            onActivated: root.targetWindow.toggleMaximized()
         }
         CaptionButton { symbol: "×"; destructive: true; onActivated: root.targetWindow.close() }
     }

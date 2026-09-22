@@ -46,17 +46,31 @@ QSGGeometryNode *rectangleNode(const QRectF &rect, const QColor &color, qreal op
 QSGGeometryNode *ellipseNode(const QRectF &rect, const QColor &color, qreal opacity, bool outline)
 {
     constexpr int segments = 96;
-    const int count = outline ? segments + 1 : segments + 2;
-    auto *node = makeGeometryNode(outline ? QSGGeometry::DrawLineStrip : QSGGeometry::DrawTriangleFan,
+    const int count = outline ? (segments + 1) * 2 : segments * 3;
+    auto *node = makeGeometryNode(outline ? QSGGeometry::DrawTriangleStrip : QSGGeometry::DrawTriangles,
                                   count, color, opacity);
-    if (outline) node->geometry()->setLineWidth(2.0f);
     auto *v = node->geometry()->vertexDataAsPoint2D();
-    int offset = 0;
-    if (!outline) { v[0].set(rect.center().x(), rect.center().y()); offset = 1; }
-    for (int i = 0; i <= segments; ++i) {
-        const qreal angle = (2.0 * std::numbers::pi_v<qreal> * i) / segments;
-        v[offset + i].set(rect.center().x() + std::cos(angle) * rect.width() / 2,
-                          rect.center().y() + std::sin(angle) * rect.height() / 2);
+    if (outline) {
+        constexpr qreal strokeWidth = 2.0;
+        for (int i = 0; i <= segments; ++i) {
+            const qreal angle = (2.0 * std::numbers::pi_v<qreal> * i) / segments;
+            const qreal cosine = std::cos(angle);
+            const qreal sine = std::sin(angle);
+            v[i * 2].set(rect.center().x() + cosine * rect.width() / 2,
+                         rect.center().y() + sine * rect.height() / 2);
+            v[i * 2 + 1].set(rect.center().x() + cosine * std::max<qreal>(0, rect.width() / 2 - strokeWidth),
+                             rect.center().y() + sine * std::max<qreal>(0, rect.height() / 2 - strokeWidth));
+        }
+    } else {
+        for (int i = 0; i < segments; ++i) {
+            const qreal angleA = (2.0 * std::numbers::pi_v<qreal> * i) / segments;
+            const qreal angleB = (2.0 * std::numbers::pi_v<qreal> * (i + 1)) / segments;
+            v[i * 3].set(rect.center().x(), rect.center().y());
+            v[i * 3 + 1].set(rect.center().x() + std::cos(angleA) * rect.width() / 2,
+                             rect.center().y() + std::sin(angleA) * rect.height() / 2);
+            v[i * 3 + 2].set(rect.center().x() + std::cos(angleB) * rect.width() / 2,
+                             rect.center().y() + std::sin(angleB) * rect.height() / 2);
+        }
     }
     return node;
 }
@@ -64,27 +78,40 @@ QSGGeometryNode *ellipseNode(const QRectF &rect, const QColor &color, qreal opac
 QSGGeometryNode *arcNode(const QRectF &rect, const QColor &color, qreal opacity)
 {
     constexpr int segments = 64;
-    auto *node = makeGeometryNode(QSGGeometry::DrawLineStrip, segments + 1, color, opacity);
-    node->geometry()->setLineWidth(28.0f);
+    auto *node = makeGeometryNode(QSGGeometry::DrawTriangleStrip, (segments + 1) * 2, color, opacity);
     auto *v = node->geometry()->vertexDataAsPoint2D();
-    for (int i = 0; i <= segments; ++i) {
-        const qreal t = qreal(i) / segments;
+    const qreal halfWidth = std::max<qreal>(1.5, 14.0 * rect.width() / 690.0);
+    auto pointAt = [&rect](qreal t) {
         const qreal x = rect.left() + rect.width() * t;
         const qreal curve = 4.0 * (t - 0.5) * (t - 0.5);
         const qreal y = rect.bottom() - rect.height() * (0.12 + curve * 0.62);
-        v[i].set(x, y);
+        return QPointF(x, y);
+    };
+    for (int i = 0; i <= segments; ++i) {
+        const qreal t = qreal(i) / segments;
+        const QPointF point = pointAt(t);
+        const QPointF before = pointAt(std::max<qreal>(0, t - 1.0 / segments));
+        const QPointF after = pointAt(std::min<qreal>(1, t + 1.0 / segments));
+        const QPointF tangent = after - before;
+        const qreal length = std::hypot(tangent.x(), tangent.y());
+        const QPointF normal = length > 0
+            ? QPointF(-tangent.y() / length, tangent.x() / length) * halfWidth
+            : QPointF();
+        v[i * 2].set(point.x() + normal.x(), point.y() + normal.y());
+        v[i * 2 + 1].set(point.x() - normal.x(), point.y() - normal.y());
     }
     return node;
 }
 
-QSGGeometryNode *selectionNode(const QRectF &rect)
+QSGNode *selectionNode(const QRectF &rect)
 {
-    auto *node = makeGeometryNode(QSGGeometry::DrawLineStrip, 5, QColor("#64e7ef"));
-    node->geometry()->setLineWidth(2.0f);
-    auto *v = node->geometry()->vertexDataAsPoint2D();
-    v[0].set(rect.left(), rect.top()); v[1].set(rect.right(), rect.top());
-    v[2].set(rect.right(), rect.bottom()); v[3].set(rect.left(), rect.bottom());
-    v[4].set(rect.left(), rect.top());
+    constexpr qreal strokeWidth = 2.0;
+    auto *node = new QSGNode;
+    const QColor color("#64e7ef");
+    node->appendChildNode(rectangleNode({rect.left(), rect.top(), rect.width(), strokeWidth}, color, 1.0));
+    node->appendChildNode(rectangleNode({rect.left(), rect.bottom() - strokeWidth, rect.width(), strokeWidth}, color, 1.0));
+    node->appendChildNode(rectangleNode({rect.left(), rect.top(), strokeWidth, rect.height()}, color, 1.0));
+    node->appendChildNode(rectangleNode({rect.right() - strokeWidth, rect.top(), strokeWidth, rect.height()}, color, 1.0));
     return node;
 }
 }

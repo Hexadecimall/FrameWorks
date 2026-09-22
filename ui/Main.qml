@@ -16,7 +16,40 @@ ApplicationWindow {
     color: Theme.background
     property bool desktopWindow: Qt.platform.os !== "wasm"
     property bool macWindow: Qt.platform.os === "osx"
+    property bool customMaximized: false
+    property real restoredX: 0
+    property real restoredY: 0
+    property real restoredWidth: 1440
+    property real restoredHeight: 920
+    readonly property bool isMaximized: macWindow ? customMaximized : visibility === Window.Maximized
     flags: desktopWindow ? Qt.Window | Qt.FramelessWindowHint : Qt.Window
+
+    function toggleMaximized() {
+        if (!desktopWindow) return
+        if (!macWindow) {
+            if (visibility === Window.Maximized) showNormal()
+            else showMaximized()
+            return
+        }
+        if (customMaximized) {
+            x = restoredX
+            y = restoredY
+            width = restoredWidth
+            height = restoredHeight
+            customMaximized = false
+        } else {
+            restoredX = x
+            restoredY = y
+            restoredWidth = width
+            restoredHeight = height
+            const area = screen.availableGeometry
+            x = area.x
+            y = area.y
+            width = area.width
+            height = area.height
+            customMaximized = true
+        }
+    }
 
     DocumentController { id: document }
     property string activeTool: "Move"
@@ -37,8 +70,7 @@ ApplicationWindow {
             onPressed: if (window.desktopWindow) window.startSystemMove()
             onDoubleClicked: {
                 if (!window.desktopWindow) return
-                if (window.visibility === Window.Maximized) window.showNormal()
-                else window.showMaximized()
+                window.toggleMaximized()
             }
         }
 
@@ -58,9 +90,10 @@ ApplicationWindow {
                 radius: 8; color: Theme.accent
                 Text { anchors.centerIn: parent; text: "FW"; color: "white"; font.pixelSize: 10; font.bold: true }
             }
-            Text {
-                text: "Frame"; color: Theme.text; font.pixelSize: 16; font.bold: true
-                Text { x: parent.width; text: "Works"; color: Theme.accent; font: parent.font }
+            Row {
+                spacing: 0
+                Text { text: "Frame"; color: Theme.text; font.pixelSize: 16; font.bold: true }
+                Text { text: "Works"; color: Theme.accent; font.pixelSize: 16; font.bold: true }
             }
             Item { Layout.preferredWidth: 24 }
             Repeater {
@@ -90,7 +123,7 @@ ApplicationWindow {
 
     component ResizeHandle: MouseArea {
         required property int edges
-        visible: window.desktopWindow && window.visibility !== Window.Maximized
+        visible: window.desktopWindow && !window.isMaximized
         z: 1000
         cursorShape: edges === (Qt.LeftEdge | Qt.TopEdge) || edges === (Qt.RightEdge | Qt.BottomEdge)
                      ? Qt.SizeFDiagCursor
@@ -285,6 +318,7 @@ ApplicationWindow {
                             color: layerSelected ? "#343138" : layerMouse.containsMouse ? "#29272c" : "transparent"
                             Rectangle { width: 2; height: parent.height - 12; anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter; color: layerSelected ? Theme.accent : "transparent" }
                             RowLayout {
+                                z: 1
                                 anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 9
                                 StudioButton { text: layerVisible ? "●" : "○"; onClicked: document.toggleVisibility(index) }
                                 Rectangle {
@@ -298,7 +332,7 @@ ApplicationWindow {
                                 }
                                 Text { text: layerLocked ? "⌑" : "›"; color: Theme.muted }
                             }
-                            MouseArea { id: layerMouse; anchors.fill: parent; hoverEnabled: true; z: -1; onClicked: document.selectLayer(index) }
+                            MouseArea { id: layerMouse; anchors.fill: parent; hoverEnabled: true; onClicked: document.selectLayer(index) }
                         }
                     }
                 }
