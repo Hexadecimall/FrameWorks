@@ -45,6 +45,16 @@ private slots:
         QCOMPARE(document.rowCount(), count + 1);
         QCOMPARE(document.selectionX(), 328.0);
     }
+
+    void createsBlankDocument()
+    {
+        DocumentController document;
+        document.newDocument();
+        QCOMPARE(document.rowCount(), 1);
+        QCOMPARE(document.selectedIndex(), 0);
+        QVERIFY(!document.starterPoster());
+        QVERIFY(!document.canUndo());
+    }
 };
 
 QTEST_MAIN(DocumentControllerTest)

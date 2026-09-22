@@ -268,8 +268,12 @@ QSGNode *ArtworkCanvas::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         const auto &layer = *iterator;
         if (!layer.visible || layer.type == "Text") continue;
         const QRectF rect = scaledRect(layer.bounds, sx, sy);
-        if (layer.name == "Background")
-            root->appendChildNode(gradientRectangleNode(rect));
+        if (layer.name == "Background") {
+            if (layer.fill == QColor("#ff754d"))
+                root->appendChildNode(gradientRectangleNode(rect));
+            else
+                root->appendChildNode(rectangleNode(rect, layer.fill, layer.opacity));
+        }
         else if (layer.name == "Orb") {
             for (int blur = 12; blur >= 1; --blur) {
                 const qreal spread = blur * 2.2 * (sx + sy) / 2.0;

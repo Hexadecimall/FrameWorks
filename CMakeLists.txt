@@ -25,6 +25,7 @@ qt_add_qml_module(frameworks
     QML_FILES
         ui/Main.qml
         ui/Theme.qml
+        ui/HomePage.qml
         ui/components/StudioButton.qml
         ui/components/WindowControls.qml
 )

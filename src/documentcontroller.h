@@ -19,6 +19,7 @@ class DocumentController : public QAbstractListModel
     Q_PROPERTY(qreal selectionOpacity READ selectionOpacity WRITE setSelectionOpacity NOTIFY selectionAppearanceChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY historyChanged)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY historyChanged)
+    Q_PROPERTY(bool starterPoster READ starterPoster NOTIFY documentChanged)
 
 public:
     struct Layer {
@@ -58,6 +59,7 @@ public:
     qreal selectionOpacity() const;
     bool canUndo() const { return m_historyIndex > 0; }
     bool canRedo() const { return m_historyIndex + 1 < m_history.size(); }
+    bool starterPoster() const { return m_starterPoster; }
     const QVector<Layer> &layers() const { return m_layers; }
 
     Q_INVOKABLE void selectLayer(int index);
@@ -68,6 +70,8 @@ public:
     Q_INVOKABLE void sendSelectedToBack();
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
+    Q_INVOKABLE void newDocument();
+    Q_INVOKABLE void openStarterDocument();
 
 public slots:
     void setSelectionX(qreal value);
@@ -100,4 +104,5 @@ private:
     QVector<Snapshot> m_history;
     int m_historyIndex = -1;
     int m_selectedIndex = -1;
+    bool m_starterPoster = true;
 };

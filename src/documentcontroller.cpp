@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-DocumentController::DocumentController(QObject *parent)
-    : QAbstractListModel(parent)
+namespace {
+QVector<DocumentController::Layer> starterPosterLayers()
 {
-    m_layers = {
+    return {
         {"Satellite", "Ellipse", {860, 802, 44, 44}, QColor("#f7ff64")},
         {"Arc", "Curve", {260, 700, 690, 280}, QColor("#1a1719")},
         {"Orbit", "EllipseOutline", {230, 270, 740, 740}, QColor("#ffffff"), 0.75},
@@ -15,6 +15,13 @@ DocumentController::DocumentController(QObject *parent)
         {"Kicker", "Text", {90, 95, 500, 60}, QColor("#181619")},
         {"Background", "Rectangle", {0, 0, 1200, 1500}, QColor("#ff754d"), 1.0, true, true}
     };
+}
+}
+
+DocumentController::DocumentController(QObject *parent)
+    : QAbstractListModel(parent)
+{
+    m_layers = starterPosterLayers();
     m_selectedIndex = 3;
     pushHistory();
 }
@@ -215,4 +222,36 @@ void DocumentController::redo()
 {
     if (!canRedo()) return;
     restoreSnapshot(m_history[++m_historyIndex]);
+}
+
+void DocumentController::newDocument()
+{
+    beginResetModel();
+    m_layers = {{"Background", "Rectangle", {0, 0, 1200, 1500}, QColor("#ffffff"), 1.0, true, true}};
+    m_selectedIndex = 0;
+    m_starterPoster = false;
+    endResetModel();
+    m_history.clear();
+    m_historyIndex = -1;
+    pushHistory();
+    emit selectionChanged();
+    emit selectionGeometryChanged();
+    emit selectionAppearanceChanged();
+    emit documentChanged();
+}
+
+void DocumentController::openStarterDocument()
+{
+    beginResetModel();
+    m_layers = starterPosterLayers();
+    m_selectedIndex = 3;
+    m_starterPoster = true;
+    endResetModel();
+    m_history.clear();
+    m_historyIndex = -1;
+    pushHistory();
+    emit selectionChanged();
+    emit selectionGeometryChanged();
+    emit selectionAppearanceChanged();
+    emit documentChanged();
 }

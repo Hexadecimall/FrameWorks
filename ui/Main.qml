@@ -16,6 +16,7 @@ ApplicationWindow {
     color: Theme.background
     property bool desktopWindow: Qt.platform.os !== "wasm"
     property bool macWindow: Qt.platform.os === "osx"
+    property bool workspaceOpen: false
     property bool customMaximized: false
     property real restoredX: 0
     property real restoredY: 0
@@ -91,6 +92,11 @@ ApplicationWindow {
                     Layout.preferredWidth: 28; Layout.preferredHeight: 28
                     radius: 8; color: Theme.accent
                     Text { anchors.centerIn: parent; text: "FW"; color: "white"; font.pixelSize: 10; font.bold: true }
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: window.workspaceOpen = false
+                    }
                 }
                 Item { Layout.preferredWidth: 14 }
                 Row {
@@ -100,6 +106,7 @@ ApplicationWindow {
                 }
                 Item { Layout.preferredWidth: 10 }
                 Row {
+                    visible: window.workspaceOpen
                     spacing: 4
                     Repeater {
                         model: ["File", "Edit", "Layer", "Select", "View"]
@@ -108,13 +115,13 @@ ApplicationWindow {
                 }
             }
             Item { Layout.fillWidth: true }
-            Rectangle { width: 6; height: 6; radius: 3; color: "#68d391" }
-            Text { text: "Orbital Poster"; color: Theme.text; font.pixelSize: 13 }
-            Text { text: "1200 × 1500"; color: Theme.muted; font.pixelSize: 12 }
+            Rectangle { visible: window.workspaceOpen; width: 6; height: 6; radius: 3; color: "#68d391" }
+            Text { visible: window.workspaceOpen; text: document.starterPoster ? "Orbital Poster" : "Untitled"; color: Theme.text; font.pixelSize: 13 }
+            Text { visible: window.workspaceOpen; text: "1200 × 1500"; color: Theme.muted; font.pixelSize: 12 }
             Item { Layout.fillWidth: true }
-            StudioButton { text: "↶"; enabled: document.canUndo; onClicked: document.undo() }
-            StudioButton { text: "↷"; enabled: document.canRedo; onClicked: document.redo() }
-            StudioButton { text: "Export"; active: true }
+            StudioButton { visible: window.workspaceOpen; text: "↶"; enabled: document.canUndo; onClicked: document.undo() }
+            StudioButton { visible: window.workspaceOpen; text: "↷"; enabled: document.canRedo; onClicked: document.redo() }
+            StudioButton { visible: window.workspaceOpen; text: "Export"; active: true }
             WindowControls {
                 visible: window.desktopWindow && !window.macWindow
                 Layout.preferredWidth: visible ? implicitWidth : 0
@@ -149,6 +156,7 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
+        visible: window.workspaceOpen
         spacing: 0
 
         Rectangle {
@@ -239,23 +247,26 @@ ApplicationWindow {
                     ArtworkCanvas { anchors.fill: parent; document: document }
                     Text {
                         x: parent.width * 0.075; y: parent.height * 0.07
+                        visible: document.starterPoster
                         text: "OBJECTS IN MOTION · 2026"; color: "#181619"
                         font.pixelSize: Math.max(9, parent.width * 0.022); font.bold: true; font.letterSpacing: 4
                     }
                     Text {
                         x: parent.width * 0.07; y: parent.height * 0.69
+                        visible: document.starterPoster
                         text: "FORM"; color: "#181619"
                         font.pixelSize: parent.width * 0.14; font.weight: Font.Black
                     }
                     Text {
                         x: parent.width * 0.07; y: parent.height * 0.79
+                        visible: document.starterPoster
                         text: "FOLLOWS"; color: "transparent"
                         style: Text.Outline; styleColor: "#181619"
                         font.pixelSize: parent.width * 0.13; font.weight: Font.Black
                     }
                     MouseArea {
                         anchors.fill: parent
-                        onPressed: document.selectLayer(3)
+                        onPressed: document.selectLayer(document.starterPoster ? 3 : 0)
                     }
                 }
                 Rectangle {
@@ -374,8 +385,21 @@ ApplicationWindow {
         }
     }
 
-    Shortcut { sequences: [StandardKey.Undo]; onActivated: document.undo() }
-    Shortcut { sequences: [StandardKey.Redo]; onActivated: document.redo() }
-    Shortcut { sequence: "Ctrl+D"; onActivated: document.duplicateSelected() }
-    Shortcut { sequence: "Delete"; onActivated: document.removeSelected() }
+    HomePage {
+        anchors.fill: parent
+        visible: !window.workspaceOpen
+        onCreateDocument: {
+            document.newDocument()
+            window.workspaceOpen = true
+        }
+        onOpenRecent: {
+            document.openStarterDocument()
+            window.workspaceOpen = true
+        }
+    }
+
+    Shortcut { enabled: window.workspaceOpen; sequences: [StandardKey.Undo]; onActivated: document.undo() }
+    Shortcut { enabled: window.workspaceOpen; sequences: [StandardKey.Redo]; onActivated: document.redo() }
+    Shortcut { enabled: window.workspaceOpen; sequence: Qt.platform.os === "osx" ? "Meta+D" : "Ctrl+D"; onActivated: document.duplicateSelected() }
+    Shortcut { enabled: window.workspaceOpen; sequence: "Delete"; onActivated: document.removeSelected() }
 }
